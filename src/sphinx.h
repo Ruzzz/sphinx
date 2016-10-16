@@ -19,11 +19,12 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #ifdef _WIN32
-	#define USE_MYSQL		1	/// whether to compile MySQL support
+	#define USE_SQLITE		1	/// whether to compile SQLite support
+	#define USE_MYSQL		0	/// whether to compile MySQL support
 	#define USE_PGSQL		0	/// whether to compile PgSQL support
-	#define USE_ODBC		1	/// whether to compile ODBC support
-	#define USE_LIBEXPAT	1	/// whether to compile libexpat support
-	#define USE_LIBICONV	1	/// whether to compile iconv support
+	#define USE_ODBC		0	/// whether to compile ODBC support
+	#define USE_LIBEXPAT	0	/// whether to compile libexpat support
+	#define USE_LIBICONV	0	/// whether to compile iconv support
 	#define	USE_LIBSTEMMER	0	/// whether to compile libstemmber support
 	#define	USE_RE2			0	/// whether to compile RE2 support
 	#define USE_RLP			0	/// whether to compile RLP support
@@ -49,6 +50,13 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
+#if USE_SQLITE
+struct sqlite3;
+struct sqlite3_stmt;
+#include <stdio.h>
+#include "sqlite3.h"
 #endif
 
 #if USE_PGSQL
@@ -2262,6 +2270,51 @@ protected:
 	void			ReportUnpackError ( int iIndex, int iError );
 };
 
+#ifdef USE_SQLITE
+/// SQLite source params
+struct CSphSourceParams_SQLite : CSphSourceParams_SQL
+{
+	int			m_iFlags;					///< connection flags
+
+	CSphSourceParams_SQLite() {}	///< ctor. sets defaults
+};
+
+
+/// SQLite source implementation
+/// multi-field plain-text documents fetched from given query
+struct CSphSource_SQLite : CSphSource_SQL
+{
+	//CSphSource_SQLite();
+	CSphSource_SQLite(const char * sName);
+
+	bool					Setup(const CSphSourceParams_SQLite & tParams);
+
+protected:
+
+	sqlite3 *				m_pSQLiteDriver;
+	sqlite3_stmt *			m_pSQLiteStatement;
+	bool					m_bError;
+	bool m_fetch_after_query;
+
+	int						m_iFlags;
+
+protected:
+	virtual void			SqlDismissResult();
+	virtual bool			SqlQuery(const char * sQuery);
+	virtual bool			SqlIsError();
+	virtual const char *	SqlError();
+	virtual bool			SqlConnect();
+	virtual void			SqlDisconnect();
+	virtual int				SqlNumFields();
+	virtual bool			SqlFetchRow();
+	virtual DWORD			SqlColumnLength(int) {
+		// This seems to work ok with PgSQL
+		return 0;
+	}
+	virtual const char *	SqlColumn(int iIndex);
+	virtual const char *	SqlFieldName(int iIndex);
+};
+#endif
 
 #if USE_MYSQL
 /// MySQL source params

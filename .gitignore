@@ -50,6 +50,9 @@
 # /win/
 /win/*.user
 /win/*.filters
+/.vs/
+/*.vc.db
+/*.vc.opendb
 
 # /doc
 /doc/Makefile

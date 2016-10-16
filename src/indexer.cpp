@@ -661,6 +661,30 @@ bool SqlParamsConfigure ( CSphSourceParams_SQL & tParams, const CSphConfigSectio
 	return true;
 }
 
+#if USE_SQLITE
+CSphSource * SpawnSourceSQLite(const CSphConfigSection & hSource, const char * sSourceName, bool RLPARG(bProxy))
+{
+	assert(hSource["type"] == "sqlite3");
+
+	CSphSourceParams_SQLite tParams;
+	if (!SqlParamsConfigure(tParams, hSource, sSourceName))
+		return NULL;
+
+	// This is not used, just here for an example...
+	LOC_GETI(tParams.m_iFlags, "sqlite_connect_flags");
+
+#if USE_RLP
+	if (bProxy)
+		pSrcSQLite = new CSphSource_Proxy<CSphSource_SQLite>(sSourceName);
+	else
+#endif
+	CSphSource_SQLite * pSrcSQLite = new CSphSource_SQLite(sSourceName);
+	if (!pSrcSQLite->Setup(tParams))
+		SafeDelete(pSrcSQLite);
+
+	return pSrcSQLite;
+}
+#endif // USE_SQLITE
 
 #if USE_PGSQL
 CSphSource * SpawnSourcePgSQL ( const CSphConfigSection & hSource, const char * sSourceName, bool RLPARG(bProxy) )
@@ -869,6 +893,11 @@ CSphSource * SpawnSource ( const CSphConfigSection & hSource, const char * sSour
 		fprintf ( stdout, "ERROR: source '%s': type not found; skipping.\n", sSourceName );
 		return NULL;
 	}
+
+	#if USE_SQLITE
+	if (hSource["type"] == "sqlite3")
+		return SpawnSourceSQLite(hSource, sSourceName, bBatchedRLP);
+	#endif
 
 	#if USE_PGSQL
 	if ( hSource["type"]=="pgsql" )
