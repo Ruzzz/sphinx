@@ -1,12 +1,11 @@
 # Sphinx server with SQLite supports.
 
 Based on https://github.com/aughey/sphinx-sqlite3
-Current version based on Sphinx 2.2.11 release
+Current version based on Sphinx 2.2.11-release.
 
 # Examle
 
 Config file for Sphinx sphinx.conf:
-
 ```
 source docs
 {
@@ -73,14 +72,14 @@ CREATE TABLE "docs" (
     ON DELETE SET DEFAULT ON UPDATE CASCADE,
   CONSTRAINT "fkey_repo" FOREIGN KEY ("repo_id") REFERENCES "repos" ("id")
     ON DELETE CASCADE ON UPDATE CASCADE,
-  UNIQUE ("repo_id", "path")
+  UNIQUE ("repo_id" ASC, "path" ASC) ON CONFLICT IGNORE
 );
 
 INSERT INTO "langs" VALUES (1, 'Unknown');
 INSERT INTO "repos" VALUES (1, null, 'd:\Docs\Repo1\', 0);
-INSERT INTO "docs" VALUES (1, 1, 1, 'Folder1\Doc100.txt');
-INSERT INTO "docs" VALUES (2, 1, 1, 'Folder2\Doc200.txt');
-INSERT INTO "docs" VALUES (3, 1, 1, 'Folder3\Doc300.txt');
+INSERT INTO "docs" (repo_id, path) VALUES(1, 'Folder1\Doc100.txt')
+INSERT INTO "docs" (repo_id, path) VALUES(1, 'Folder2\Doc200.txt')
+INSERT INTO "docs" (repo_id, path) VALUES(1, 'Folder3\Doc300.txt')
 ```
 
 Run:
